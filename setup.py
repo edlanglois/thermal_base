@@ -25,6 +25,7 @@ setup(
         "matplotlib",
         "numpy",
         "opencv_python",
+        "requests",
         "tqdm",
     ],
 )
