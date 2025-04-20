@@ -58,7 +58,7 @@ class ThermalImage:
         # read image metadata needed for conversion of the raw sensor values
         # E=1,SD=1,RTemp=20,ATemp=RTemp,IRWTemp=RTemp,IRT=1,RH=50,PR1=21106.77,PB=1501,PF=1,PO=-7340,PR2=0.012545258
         exif_binary = "exiftool.exe" if "win" in sys.platform else "exiftool"
-        meta_json = sp.Popen(
+        meta_json = sp.run(
             (
                 f'{exif_binary} "{self.image_path}" -Emissivity -ObjectDistance -AtmosphericTemperature '
                 "-ReflectedApparentTemperature -IRWindowTemperature -IRWindowTransmission -RelativeHumidity "
@@ -66,7 +66,8 @@ class ThermalImage:
             ),
             shell=True,
             stdout=sp.PIPE,
-        ).communicate()[0]
+            check=True,
+        ).stdout
 
         meta = json.loads(meta_json)[0]
 
@@ -108,7 +109,7 @@ class ThermalImage:
         """
         # read image metadata for the dji camera images
         exif_binary = "exiftool.exe" if "win" in sys.platform else "exiftool"
-        meta_json = sp.Popen(
+        meta_json = sp.run(
             (
                 f'{exif_binary} "{self.image_path}" -Emissivity -ObjectDistance -AtmosphericTemperature '
                 "-ReflectedApparentTemperature -IRWindowTemperature -IRWindowTransmission -RelativeHumidity "
@@ -116,7 +117,8 @@ class ThermalImage:
             ),
             shell=True,
             stdout=sp.PIPE,
-        ).communicate()[0]
+            check=True,
+        ).stdout
         meta = json.loads(meta_json)[0]
         camera_model = meta["Model"]
 
@@ -161,12 +163,17 @@ class ThermalImage:
 
         if "MAVIC" not in camera_model:
             # Run executable file dji_irp passing image path and prevent output printing to console. Raw file generated.
-            sp.run(
+            extract = sp.run(
                 [str(Path(path_executable, dji_binary)), "-s", f"{self.image_path}", "-a", "extract"],
                 universal_newlines=True,
-                stdout=sp.DEVNULL,
+                stdout=sp.PIPE,
                 stderr=sp.STDOUT,
             )
+            try:
+                extract.check_returncode()
+            except sp.CalledProcessError as e:
+                raise RuntimeError(extract.stdout) from e
+
             data = Path("output.raw").read_bytes()
             # Read the contents of the generated output.raw file.
             img = Image.frombytes("I;16L", (640, 512), data)
