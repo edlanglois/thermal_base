@@ -57,7 +57,7 @@ class ThermalImage:
         """Extracts the FLIR-encoded thermal image as 2D floating-point numpy array with temperatures in degC."""
         # read image metadata needed for conversion of the raw sensor values
         # E=1,SD=1,RTemp=20,ATemp=RTemp,IRWTemp=RTemp,IRT=1,RH=50,PR1=21106.77,PB=1501,PF=1,PO=-7340,PR2=0.012545258
-        exif_binary = "exiftool.exe" if "win" in sys.platform else "exiftool"
+        exif_binary = get_exif_binary()
         meta_json = sp.run(
             (
                 f'{exif_binary} "{self.image_path}" -Emissivity -ObjectDistance -AtmosphericTemperature '
@@ -108,7 +108,7 @@ class ThermalImage:
         Link to DJI Forum post: https://forum.dji.com/forum.php?mod=redirect&goto=findpost&ptid=230321&pid=2389016
         """
         # read image metadata for the dji camera images
-        exif_binary = "exiftool.exe" if "win" in sys.platform else "exiftool"
+        exif_binary = get_exif_binary()
         meta_json = sp.run(
             (
                 f'{exif_binary} "{self.image_path}" -Emissivity -ObjectDistance -AtmosphericTemperature '
@@ -954,6 +954,10 @@ class ThermalSeqVideo:
                     idx += 1
                     last_save_time = current_time
         return True
+
+
+def get_exif_binary() -> str:
+    return "exiftool.exe" if "win" in sys.platform else "exiftool"
 
 
 def get_thermal_image_from_file(thermal_input, thermal_class=ThermalImage, colormap=None):

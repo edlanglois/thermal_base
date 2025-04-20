@@ -1,4 +1,5 @@
 """Module imports."""
 from . import utils
 from .thermal_base import (ThermalImage, ThermalImageAnnotation,
-                           ThermalSeqVideo, get_thermal_image_from_file)
+                           ThermalSeqVideo, get_thermal_image_from_file,
+                           get_exif_binary)
